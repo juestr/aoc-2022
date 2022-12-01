@@ -48,6 +48,7 @@ def run_aoc(f, /, time=(1, 's'), split=None, conv=None):
     if conv:
         input = [conv(x) for x in input] if split is not None else conv(input)
 
+    print()
     print_lap_time('Setup time: ')
 
     for i, r in enumerate(f(input), start=1):
