@@ -1,5 +1,6 @@
 # task .txt files
 aoc??.txt
+private
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

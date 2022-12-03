@@ -2,7 +2,7 @@
 
 from itertools import pairwise
 
-from runner import run_aoc, error, warning, info, debug
+from runner import run_aoc
 
 def aoc01(input):
 
