@@ -3,9 +3,9 @@
 
 from argparse import ArgumentParser
 import logging
+from logging import error, warning, info, debug
 import timeit
 import os
-from logging import error, warning, info, debug
 
 def _fix_lambda(f):
     match f:
@@ -28,6 +28,8 @@ def readfile(fn):
         return fd.read()
 
 def pd_table(fn, names=None, dtype=None, header=None, delim_whitespace=True, **kw):
+    '''Pandas table input reader'''
+
     import pandas as pd
     return pd.read_table(fn, names=names, dtype=dtype,
         header=header, delim_whitespace=delim_whitespace, **kw)
