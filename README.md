@@ -4,9 +4,10 @@
 
 Each day's puzzle can be run as a standalone script without arguments. It accepts command line options for various instrumentations, see --help.
 
-runner.py contains common boilerplate and commandline parsing code.
+aoc_util.py contains common utils, boilerplate and a commandline runner.
 
-The puzzles were written using Python 3.11.
+The puzzles were written using Python 3.11, and are formatted by isort and
+black in default configurations.
 
 All dependencies can be installed by:
 

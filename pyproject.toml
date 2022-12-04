@@ -1,0 +1,11 @@
+
+
+[tool.isort]
+profile = "black"
+
+[tool.black]
+
+
+[tool.autoimport.common_statements]
+"np" = "import numpy as np"
+"pd" = "import pandas as pd"

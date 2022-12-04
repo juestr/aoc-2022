@@ -1,11 +1,14 @@
 #!/usr/bin/env python3
 
 from more_itertools import chunked, divide, one
-from runner import run_aoc
+
+from aoc_util import run_aoc
+
 
 def priority(x):
     i = ord(x)
     return i - 96 if i > 96 else i - 38
+
 
 def aoc03(rucksacks):
 
@@ -22,5 +25,5 @@ def aoc03(rucksacks):
     yield sum_priorities2
 
 
-if __name__ == '__main__':
-   run_aoc(aoc03, split='lines')
+if __name__ == "__main__":
+    run_aoc(aoc03, split="lines")
