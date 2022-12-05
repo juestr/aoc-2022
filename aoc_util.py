@@ -13,6 +13,8 @@ _root_logger = logging.getLogger()
 
 def _fix_lambda(f):
     match f:
+        case None:
+            return lambda x: x
         case (f, *args, kw) if isinstance(kw, dict):
             return lambda input: f(input, *args, **kw)
         case (f, *args):
@@ -21,10 +23,16 @@ def _fix_lambda(f):
             return f
 
 
-def d(*args, s=" ", r=False, m="", l=logging.DEBUG):
+def d(*args, s=" ", r=False, m="", t="", l=logging.DEBUG):
     """Simple logging.debug helper"""
     if _root_logger.isEnabledFor(logging.DEBUG):
-        logging.log(l, s.join((m + "%" + "sr"[r],) * len(args)), *args)
+        logging.log(
+            l,
+            (t + "\n") * bool(t)
+            + (m + s) * bool(m)
+            + s.join(("%" + "sr"[r],) * len(args)),
+            *args,
+        )
 
 
 def readfile(fn):
@@ -42,11 +50,13 @@ def np_raw_table(input, dtype="uint8"):
     return flat.reshape((-1, l + 1))[:, :-1]
 
 
-def run_aoc(aocf, /, time=(1, "s"), read=readfile, split=None, apply=None):
+def run_aoc(
+    aocf, /, time=(1, "s"), read=readfile, split=None, apply=None, transform=None
+):
     """Runs puzzle solving generator function aocf
 
     Name of aocf needs to end in 2 digits giving the AOC day.
-    Will provide possibly transformed input as argument (read, split, apply)
+    Will provide possibly transformed input as argument (read, split+apply, transform)
     Should yield its results.
     See --help for options taken from command line.
     """
@@ -118,26 +128,22 @@ def run_aoc(aocf, /, time=(1, "s"), read=readfile, split=None, apply=None):
     )
 
     input = _fix_lambda(read)(cmdargs.input)
+    apply = _fix_lambda(apply)
     match split:
         case None:
             pass
         case True:
-            input = input.split()
+            input = [apply(x) for x in input.split()]
         case "lines":
-            input = input.splitlines()
+            input = [apply(x) for x in input.splitlines()]
         case "matrix":
-            input = [line.split() for line in input.splitlines()]
+            input = [[apply(x) for x in input.split()] for line in input.splitlines()]
         case c:
-            input = input.split(c)
-    if apply:
-        apply = _fix_lambda(apply)
-        match split:
-            case None:
-                input = apply(input)
-            case "matrix":
-                input = [[apply(x) for x in row] for row in input]
-            case _:
-                input = [apply(x) for x in input]
+            input = [apply(x) for x in input.split(c)]
+    if transform:
+        input = _fix_lambda(transform)(input)
+    else:
+        input = (input,)
     if cmdargs.test:
         with open(cmdargs.results) as fd:
             cmdargs.expect = fd.read().splitlines()
@@ -148,7 +154,7 @@ def run_aoc(aocf, /, time=(1, "s"), read=readfile, split=None, apply=None):
     info("")
 
     results = []
-    for i, r in enumerate(aocf(input), start=1):
+    for i, r in enumerate(aocf(*input), start=1):
         info(f"\n### Result {i} of {aocf.__name__}():\n")
         print(r)
         info("")

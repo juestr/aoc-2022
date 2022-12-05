@@ -17,10 +17,10 @@ else
   printf "#!/usr/bin/env python3
 
 from itertools import pairwise
-from more-itertools import chunked
+from more_itertools import chunked
 import numpy as np
 import pandas as pd
-from runner import run_aoc, error, info, debug, d, np_ascii_table
+from aoc_util import run_aoc, error, info, debug, d, np_ascii_table
 
 def aoc%02d(input):
 
