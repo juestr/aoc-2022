@@ -11,7 +11,6 @@ def priority(x):
 
 
 def aoc03(rucksacks):
-
     compartments = (divide(2, r) for r in rucksacks)
     in_both = (one(set(a) & set(b)) for a, b in compartments)
     sum_priorities = sum(map(priority, in_both))

@@ -4,7 +4,6 @@ from aoc_util import run_aoc
 
 
 def aoc01(input):
-
     groups = input.split("\n\n")
     calories = [sum(map(int, group.split())) for group in groups]
 

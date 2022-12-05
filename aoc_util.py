@@ -2,9 +2,13 @@
 
 import logging
 import os
+import sys
 import timeit
 from argparse import ArgumentParser
-from logging import debug, error, info, warning
+from logging import error, info, warn
+
+_keep_imports = error, warn, info  # re-export
+_root_logger = logging.getLogger()
 
 
 def _fix_lambda(f):
@@ -17,41 +21,24 @@ def _fix_lambda(f):
             return f
 
 
-def d(*args, s=" ", r=False):
+def d(*args, s=" ", r=False, m="", l=logging.DEBUG):
     """Simple logging.debug helper"""
-
-    debug(s.join(("%" + "sr"[r],) * len(args)), *args)
+    if _root_logger.isEnabledFor(logging.DEBUG):
+        logging.log(l, s.join((m + "%" + "sr"[r],) * len(args)), *args)
 
 
 def readfile(fn):
     """Default input reader"""
-
     with open(fn) as fd:
         return fd.read()
 
 
-def pd_table(fn, names=None, dtype=None, header=None, delim_whitespace=True, **kw):
-    """Pandas table input reader"""
-
-    import pandas as pd
-
-    return pd.read_table(
-        fn,
-        names=names,
-        dtype=dtype,
-        header=header,
-        delim_whitespace=delim_whitespace,
-        **kw,
-    )
-
-
-def np_ascii_table(input, dtype="uint8"):
-    """Transform str table to a 2d np.array of ASCII values"""
-
-    import numpy as np
+def np_raw_table(input, dtype="uint8"):
+    """Transform raw tabular data to a 2d np.array"""
+    import numpy  # noqa: autoimport
 
     l = input.index("\n")
-    flat = np.fromstring(input, dtype=dtype)
+    flat = numpy.fromstring(input, dtype=dtype)
     return flat.reshape((-1, l + 1))[:, :-1]
 
 
@@ -64,16 +51,21 @@ def run_aoc(aocf, /, time=(1, "s"), read=readfile, split=None, apply=None):
     See --help for options taken from command line.
     """
 
-    t0 = t1 = timeit.default_timer()
+    t0 = t1 = t2 = timeit.default_timer()
     n = int(aocf.__name__[-2:])
     session = os.environ.get("SESSION")
     loglevel = os.environ.get("LOGLEVEL", "INFO").upper()
 
-    def print_lap_time(label="Time: "):
-        nonlocal t0, t1
+    def lap_time(label="Time: "):
+        nonlocal t1, t2
         if cmdargs.timeit:
-            t0, t1 = t1, timeit.default_timer()
-            print(f"{label}{(t1-t0)*time[0]:_.3f}{time[1]}")
+            t1, t2 = t2, timeit.default_timer()
+            info(f"{label}{(t2-t1)*time[0]:_.3f}{time[1]}")
+
+    def total_time(label="Total time: "):
+        if cmdargs.timeit:
+            t = timeit.default_timer()
+            info(f"{label}{(t-t0)*time[0]:_.3f}{time[1]}")
 
     parser = ArgumentParser(description=f"Run AOC example {n}")
     parser.add_argument(
@@ -89,7 +81,19 @@ def run_aoc(aocf, /, time=(1, "s"), read=readfile, split=None, apply=None):
         help=f"read input from aoc{n:02}_example.txt",
     )
     parser.add_argument(
+        "--test",
+        action="store_true",
+        default=False,
+        help="test against <input>.results",
+    )
+    parser.add_argument(
         "--expect", action="append", default=[], help="check expected result (multiple)"
+    )
+    parser.add_argument(
+        "--write-results",
+        action="store_true",
+        default=False,
+        help="create <input>.results",
     )
     parser.add_argument(
         "--timeit", action="store_true", default=False, help="show timing information"
@@ -97,14 +101,20 @@ def run_aoc(aocf, /, time=(1, "s"), read=readfile, split=None, apply=None):
     parser.add_argument(
         "--loglevel",
         default=loglevel,
-        choices=["CRITICAL, ERROR", "WARNING", "INFO", "DEBUG"],
+        choices=["OFF", "ERROR", "WARNING", "INFO", "DEBUG"],
         help="log level, overrides $LOGLEVEL",
     )
     cmdargs = parser.parse_args()
-    cmdargs.expect.reverse()
+    assert (
+        not cmdargs.expect or not cmdargs.test
+    ), "--expect and --test are incompatible"
+    cmdargs.results = cmdargs.input + ".results"
 
     logging.basicConfig(
-        encoding="utf-8", format="%(message)s", level=getattr(logging, cmdargs.loglevel)
+        stream=sys.stdout,
+        encoding="utf-8",
+        format="%(message)s",
+        level=100 if cmdargs.loglevel == "OFF" else getattr(logging, cmdargs.loglevel),
     )
 
     input = _fix_lambda(read)(cmdargs.input)
@@ -128,20 +138,34 @@ def run_aoc(aocf, /, time=(1, "s"), read=readfile, split=None, apply=None):
                 input = [[apply(x) for x in row] for row in input]
             case _:
                 input = [apply(x) for x in input]
+    if cmdargs.test:
+        with open(cmdargs.results) as fd:
+            cmdargs.expect = fd.read().splitlines()
+    cmdargs.expect.reverse()
 
-    print()
-    print_lap_time("### Setup time: ")
-    print()
+    info("")
+    lap_time("Setup time: ")
+    info("")
 
+    results = []
     for i, r in enumerate(aocf(input), start=1):
-        print(f"\n### Result {i} of {aocf.__name__}():\n\n{r}\n")
+        info(f"\n### Result {i} of {aocf.__name__}():\n")
+        print(r)
+        info("")
+        results.append(r)
         if cmdargs.expect:
             expected = cmdargs.expect.pop()
             if str(r) == expected:
-                print("✅ matches the expected value\n")
+                info("✅ matches the expected value\n")
             else:
-                print(f"❌ does not match {expected}\n")
-        print_lap_time("### Result time: ")
-        print()
+                warn(f"❌ does not match {expected}\n")
+        lap_time("Result time: ")
+        info("")
+    total_time()
+
+    if cmdargs.write_results:
+        info("Writing results to %s", cmdargs.results)
+        with open(cmdargs.results, "w") as fd:
+            fd.write("\n".join(map(str, results)))
 
     logging.shutdown()

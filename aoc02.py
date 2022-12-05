@@ -3,7 +3,7 @@
 import numpy as np
 import pandas as pd
 
-from aoc_util import d, pd_table, run_aoc
+from aoc_util import d, run_aoc
 
 
 def aoc02(strategy: pd.DataFrame):
@@ -28,4 +28,15 @@ def aoc02(strategy: pd.DataFrame):
 
 
 if __name__ == "__main__":
-    run_aoc(aoc02, read=(pd_table, ("elf", "you"), "category"))
+    run_aoc(
+        aoc02,
+        read=(
+            pd.read_table,
+            dict(
+                header=None,
+                names=("elf", "you"),
+                dtype="category",
+                delim_whitespace=True,
+            ),
+        ),
+    )

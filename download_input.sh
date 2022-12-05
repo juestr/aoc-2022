@@ -20,7 +20,7 @@ from itertools import pairwise
 from more-itertools import chunked
 import numpy as np
 import pandas as pd
-from runner import run_aoc, error, info, debug, d, pd_table, np_ascii_table
+from runner import run_aoc, error, info, debug, d, np_ascii_table
 
 def aoc%02d(input):
 
@@ -34,7 +34,10 @@ if __name__ == '__main__':
     run_aoc(aoc%02d)
 #    run_aoc(aoc%02d, split='lines', apply=int)
 #    run_aoc(aoc%02d, apply=(np_ascii_table, dict(dtype=np.int8)))
-#    run_aoc(aoc%02d, read=(pd_table, dict(names=('elf', 'you'), dtype='category')))
+# run_aoc(
+#     aoc%02d,
+#     read=(pd.read_table, dict(header=None, header=(), sep="[,-]", delim_whitespace=True)),
+# )
 " $1 $1 $1 $1 > $fn
 chmod 755 $fn
 fi
