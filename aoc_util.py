@@ -5,9 +5,9 @@ import os
 import sys
 import timeit
 from argparse import ArgumentParser
-from logging import error, info, warn
+from logging import debug, error, info, warn
 
-_keep_imports = error, warn, info  # re-export
+_keep_imports = error, warn, info, debug  # re-export
 _root_logger = logging.getLogger()
 
 
@@ -23,15 +23,17 @@ def _fix_lambda(f):
             return f
 
 
-def d(*args, s=" ", r=False, m="", t="", l=logging.DEBUG):
+def d(*args, s=" ", r=False, p=False, m="", t="", l=logging.DEBUG):
     """Simple logging.debug helper"""
+    from pprint import pprint  # noqa: autoimport
+
     if _root_logger.isEnabledFor(logging.DEBUG):
         logging.log(
             l,
             (t + "\n") * bool(t)
             + (m + s) * bool(m)
             + s.join(("%" + "sr"[r],) * len(args)),
-            *args,
+            *(map(pprint, args) if p else args),
         )
 
 
@@ -136,8 +138,10 @@ def run_aoc(
             input = [apply(x) for x in input.split()]
         case "lines":
             input = [apply(x) for x in input.splitlines()]
-        case "matrix":
-            input = [[apply(x) for x in input.split()] for line in input.splitlines()]
+        case "lines_fields":
+            input = [
+                tuple(apply(x) for x in line.split()) for line in input.splitlines()
+            ]
         case c:
             input = [apply(x) for x in input.split(c)]
     if transform:
