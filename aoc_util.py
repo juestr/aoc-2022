@@ -43,13 +43,13 @@ def readfile(fn):
         return fd.read()
 
 
-def np_raw_table(input, dtype="uint8"):
+def np_raw_table(input, dtype="uint8", offs=0):
     """Transform raw tabular data to a 2d np.array"""
     import numpy  # noqa: autoimport
 
     l = input.index("\n")
     flat = numpy.fromstring(input, dtype=dtype)
-    return flat.reshape((-1, l + 1))[:, :-1]
+    return (flat.reshape((-1, l + 1))[:, :-1] - offs,)
 
 
 def run_aoc(
