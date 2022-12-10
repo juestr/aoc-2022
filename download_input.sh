@@ -20,7 +20,7 @@ from itertools import pairwise
 from more_itertools import chunked
 import numpy as np
 import pandas as pd
-from aoc_util import run_aoc, error, info, debug, d, np_ascii_table
+from aoc_util import run_aoc, error, info, debug, d, np_raw_table
 
 def aoc%02d(input):
 
