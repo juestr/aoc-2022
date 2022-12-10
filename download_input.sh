@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 if [ -z "$SESSION" ] ; then
-  echo "export SESSION= missing"
+  echo "export SESSION= missing (cookie from browser)"
   exit 1
 fi
 if [ -z "$1" ] ; then
@@ -42,16 +42,16 @@ if __name__ == '__main__':
 chmod 755 $fn
 fi
 
-fn=`printf 'aoc%02d_example.txt' $1`
+fn=`printf 'data/aoc%02d_example.txt' $1`
 echo "Touching $fn"
 touch $fn
-fn=`printf 'aoc%02d_example.txt.results' $1`
+fn=`printf 'data/aoc%02d_example.txt.results' $1`
 echo "Touching $fn"
 touch $fn
-fn=`printf 'aoc%02d_input.txt.results' $1`
+fn=`printf 'data/aoc%02d_input.txt.results' $1`
 echo "Touching $fn"
 touch $fn
 
-fn=`printf 'aoc%02d_input.txt' $1`
+fn=`printf 'data/aoc%02d_input.txt' $1`
 echo "Downloading input for day <$1> to $fn"
 curl --cookie session=${SESSION} "https://adventofcode.com/2022/day/$1/input" > $fn || ( echo "download failed" && exit 1 )

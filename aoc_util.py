@@ -82,15 +82,15 @@ def run_aoc(
     parser = ArgumentParser(description=f"Run AOC example {n}")
     parser.add_argument(
         "--input",
-        default=f"aoc{n:02}_input.txt",
-        help=f"input file to read (aoc{n:02}_input.txt)",
+        default=f"data/aoc{n:02}_input.txt",
+        help=f"input file to read (data/aoc{n:02}_input.txt)",
     )
     parser.add_argument(
         "--example",
         action="store_const",
         dest="input",
-        const=f"aoc{n:02}_example.txt",
-        help=f"read input from aoc{n:02}_example.txt",
+        const=f"data/aoc{n:02}_example.txt",
+        help=f"read input from data/aoc{n:02}_example.txt",
     )
     parser.add_argument(
         "--test",
