@@ -25,15 +25,15 @@ def _fix_lambda(f):
 
 def d(*args, s=" ", r=False, p=False, m="", t="", l=logging.DEBUG):
     """Simple logging.debug helper"""
-    from pprint import pprint  # noqa: autoimport
+    from pprint import pformat  # noqa: autoimport
 
-    if _root_logger.isEnabledFor(logging.DEBUG):
+    if _root_logger.isEnabledFor(l):
         logging.log(
             l,
             (t + "\n") * bool(t)
             + (m + s) * bool(m)
-            + s.join(("%" + "sr"[r],) * len(args)),
-            *(map(pprint, args) if p else args),
+            + s.join(("%" + "sr"[r] + "\n" * p,) * len(args)),
+            *(map(pformat, args) if p else args),
         )
 
 
