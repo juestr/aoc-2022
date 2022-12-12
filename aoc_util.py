@@ -33,8 +33,8 @@ def d(*args, s=" ", r=False, p=False, m="", t="", l=logging.DEBUG):
     if _root_logger.isEnabledFor(l):
         logging.log(
             l,
-            (t + "\n") * bool(t)
-            + (m + s) * bool(m)
+            (t + ":\n" if t else "")
+            + (m + ":" + s if m else "")
             + s.join(("%" + "sr"[r],) * len(args)),
             *(map(pformat, args) if p else args),
         )
@@ -48,57 +48,55 @@ def readfile(fn):
 
 def np_raw_table(input, dtype="uint8", offs=0):
     """Transform raw tabular data to a 2d np.array"""
-    import numpy  # noqa: autoimport
+    import numpy as np  # noqa: autoimport
 
     l = input.index("\n")
-    flat = numpy.fromstring(input, dtype=dtype)
+    flat = np.fromstring(input, dtype=dtype)
     return (flat.reshape((-1, l + 1))[:, :-1] - offs,)
 
 
-def run_aoc(
-    aocf, /, time=(1, "s"), read=readfile, split=None, apply=None, transform=None
-):
-    """Runs puzzle solving generator function aocf
+def mk_input_reader(read=readfile, split=None, apply=None, transform=None):
+    """Returns a function reading and transforming an input file"""
 
-    The name of aocf needs to end in 2 digits giving the AOC day.
+    def get_input(filename):
+        input = read(filename)
+        match split:
+            case None:
+                pass
+            case "fields":
+                input = [apply(x) for x in input.split()]
+            case "lines":
+                input = [apply(x) for x in input.splitlines()]
+            case "lines_fields":
+                input = [
+                    tuple(apply(x) for x in line.split()) for line in input.splitlines()
+                ]
+            case c:
+                input = [apply(x) for x in input.split(c)]
+        if transform:
+            return transform(input)
+        else:
+            return (input,)
 
-    An input file is read, optionally split into lines and/or fields which
-    are mapped by appy, then finally passed through transform and provided
-    as multiple arguments to aocf.
+    read = _fix_lambda(read)
+    apply = _fix_lambda(apply)
+    transform = _fix_lambda(transform)
+    return get_input
 
-    The aocf function should yield its results.
 
-    See --help for options taken from command line.
-    """
-
-    t0 = t1 = t2 = timeit.default_timer()
-    n = int(aocf.__name__[-2:])
-    session = os.environ.get("SESSION")
-    loglevel = os.environ.get("LOGLEVEL", "INFO").upper()
-
-    def lap_time(label="Time: "):
-        nonlocal t1, t2
-        if cmdargs.timeit:
-            t1, t2 = t2, timeit.default_timer()
-            info(f"{label}{(t2-t1)*time[0]:_.3f}{time[1]}")
-
-    def total_time(label="Total time: "):
-        if cmdargs.timeit:
-            t = timeit.default_timer()
-            info(f"{label}{(t-t0)*time[0]:_.3f}{time[1]}")
-
-    parser = ArgumentParser(description=f"Run AOC example {n}")
+def mk_parser(day: int, loglevel):
+    parser = ArgumentParser(description=f"Run AOC example {day}")
     parser.add_argument(
         "--input",
-        default=f"data/aoc{n:02}_input.txt",
-        help=f"input file to read (data/aoc{n:02}_input.txt)",
+        default=f"data/aoc{day:02}_input.txt",
+        help=f"input file to read (data/aoc{day:02}_input.txt)",
     )
     parser.add_argument(
         "--example",
         action="store_const",
         dest="input",
-        const=f"data/aoc{n:02}_example.txt",
-        help=f"read input from data/aoc{n:02}_example.txt",
+        const=f"data/aoc{day:02}_example.txt",
+        help=f"read input from data/aoc{day:02}_example.txt",
     )
     parser.add_argument(
         "--test",
@@ -124,7 +122,48 @@ def run_aoc(
         choices=["OFF", "ERROR", "WARNING", "INFO", "DEBUG"],
         help="log level, overrides $LOGLEVEL",
     )
-    cmdargs = parser.parse_args()
+    return parser
+
+
+def run_aoc(
+    aocf,
+    *,
+    read=readfile,
+    split=None,
+    apply=None,
+    transform=None,
+    time=(1, "s"),
+    np_printoptions=None,
+):
+    """Runs puzzle solving generator function aocf
+
+    The name of aocf needs to end in 2 digits giving the AOC day.
+
+    An input file is read, optionally split into lines and/or fields which
+    are mapped by appy, then finally passed through transform and provided
+    as multiple arguments to aocf.
+
+    The aocf function should yield its results.
+
+    See --help for options taken from command line.
+    """
+
+    def lap_time(label="Time: "):
+        nonlocal t1, t2
+        if cmdargs.timeit:
+            t1, t2 = t2, timeit.default_timer()
+            info(f"{label}{(t2-t1)*time[0]:_.3f}{time[1]}")
+
+    def total_time(label="Total time: "):
+        if cmdargs.timeit:
+            t = timeit.default_timer()
+            info(f"{label}{(t-t0)*time[0]:_.3f}{time[1]}")
+
+    t0 = t1 = t2 = timeit.default_timer()
+    day = int(aocf.__name__[-2:])
+    session = os.environ.get("SESSION")
+    loglevel = os.environ.get("LOGLEVEL", "INFO").upper()
+    cmdargs = mk_parser(day, loglevel).parse_args()
     assert (
         not cmdargs.expect or not cmdargs.test
     ), "--expect and --test are incompatible"
@@ -137,36 +176,24 @@ def run_aoc(
         level=100 if cmdargs.loglevel == "OFF" else getattr(logging, cmdargs.loglevel),
     )
 
-    input = _fix_lambda(read)(cmdargs.input)
-    apply = _fix_lambda(apply)
-    match split:
-        case None:
-            pass
-        case "fields":
-            input = [apply(x) for x in input.split()]
-        case "lines":
-            input = [apply(x) for x in input.splitlines()]
-        case "lines_fields":
-            input = [
-                tuple(apply(x) for x in line.split()) for line in input.splitlines()
-            ]
-        case c:
-            input = [apply(x) for x in input.split(c)]
-    if transform:
-        input = _fix_lambda(transform)(input)
-    else:
-        input = (input,)
+    aocf_args = mk_input_reader(read, split, apply, transform)(cmdargs.input)
+
     if cmdargs.test:
         with open(cmdargs.results) as fd:
             cmdargs.expect = fd.read().splitlines()
     cmdargs.expect.reverse()
+
+    if np_printoptions:
+        import numpy as np  # noqa: autoimport
+
+        np.set_printoptions(**np_printoptions)
 
     info("")
     lap_time("Setup time: ")
     info("")
 
     results = []
-    for i, r in enumerate(aocf(*input), start=1):
+    for i, r in enumerate(aocf(*aocf_args), start=1):
         info(f"\n### Result {i} of {aocf.__name__}():\n")
         print(r)
         info("")
