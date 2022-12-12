@@ -25,14 +25,17 @@ def _fix_lambda(f):
 
 def d(*args, s=" ", r=False, p=False, m="", t="", l=logging.DEBUG):
     """Simple logging.debug helper"""
-    from pprint import pformat  # noqa: autoimport
+    if p:
+        from pprint import pformat  # noqa: autoimport
 
+        if s == " ":
+            s = "\n"
     if _root_logger.isEnabledFor(l):
         logging.log(
             l,
             (t + "\n") * bool(t)
             + (m + s) * bool(m)
-            + s.join(("%" + "sr"[r] + "\n" * p,) * len(args)),
+            + s.join(("%" + "sr"[r],) * len(args)),
             *(map(pformat, args) if p else args),
         )
 
@@ -57,9 +60,14 @@ def run_aoc(
 ):
     """Runs puzzle solving generator function aocf
 
-    Name of aocf needs to end in 2 digits giving the AOC day.
-    Will provide possibly transformed input as argument (read, split+apply, transform)
-    Should yield its results.
+    The name of aocf needs to end in 2 digits giving the AOC day.
+
+    An input file is read, optionally split into lines and/or fields which
+    are mapped by appy, then finally passed through transform and provided
+    as multiple arguments to aocf.
+
+    The aocf function should yield its results.
+
     See --help for options taken from command line.
     """
 
@@ -134,7 +142,7 @@ def run_aoc(
     match split:
         case None:
             pass
-        case True:
+        case "fields":
             input = [apply(x) for x in input.split()]
         case "lines":
             input = [apply(x) for x in input.splitlines()]
