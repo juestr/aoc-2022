@@ -22,6 +22,8 @@ import numpy as np
 import pandas as pd
 from aoc_util import run_aoc, error, info, debug, d, np_raw_table
 
+np, pd, pairwise, chunked, d
+
 def aoc%02d(input):
 
 
@@ -31,23 +33,27 @@ def aoc%02d(input):
 
 
 if __name__ == '__main__':
-    run_aoc(aoc%02d)
-#    run_aoc(aoc%02d, split='lines', apply=int)
-#    run_aoc(aoc%02d, apply=(np_ascii_table, dict(dtype=np.int8)))
-# run_aoc(
-#     aoc%02d,
-#     read=(pd.read_table, dict(header=None, header=(), sep="[,-]", delim_whitespace=True)),
-# )
-" $1 $1 $1 $1 > $fn
+run_aoc(
+    aoc%02d,
+    #  read=(pd.read_table, dict(header=None, header=(), sep=' ', delim_whitespace=True)),
+    #  split='lines_fields',
+    #  apply=int,
+    #  transform=np_raw_table,
+    #  np_printoptions=dict(linewidth=120, threshold=5000, edgeitems=10),
+)
+" $1 $1 > $fn
 chmod 755 $fn
+atom $fn
 fi
 
 fn=`printf 'data/aoc%02d_example.txt' $1`
 echo "Touching $fn"
 touch $fn
+atom $fn
 fn=`printf 'data/aoc%02d_example.txt.results' $1`
 echo "Touching $fn"
 touch $fn
+atom $fn
 fn=`printf 'data/aoc%02d_input.txt.results' $1`
 echo "Touching $fn"
 touch $fn

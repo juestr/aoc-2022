@@ -11,10 +11,10 @@ _keep_imports = error, warn, info, debug  # re-export
 _root_logger = logging.getLogger()
 
 
-def _fix_lambda(f):
+def _fix_lambda(f, default=lambda x: x):
     match f:
         case None:
-            return lambda x: x
+            return default
         case (f, *args, kw) if isinstance(kw, dict):
             return lambda input: f(input, *args, **kw)
         case (f, *args):
@@ -80,7 +80,7 @@ def mk_input_reader(read=readfile, split=None, apply=None, transform=None):
 
     read = _fix_lambda(read)
     apply = _fix_lambda(apply)
-    transform = _fix_lambda(transform)
+    transform = _fix_lambda(transform, lambda x: (x,))
     return get_input
 
 
@@ -128,6 +128,7 @@ def mk_parser(day: int, loglevel):
 def run_aoc(
     aocf,
     *,
+    day=None,
     read=readfile,
     split=None,
     apply=None,
@@ -135,17 +136,18 @@ def run_aoc(
     time=(1, "s"),
     np_printoptions=None,
 ):
-    """Runs puzzle solving generator function aocf
+    """Runs puzzle solving generator function aocf with appropriate input
 
-    The name of aocf needs to end in 2 digits giving the AOC day.
+    The day parameter is auto detected if the name of aocf ends in 2 digits,
+    and is used to select defaults for the input files read.
 
-    An input file is read, optionally split into lines and/or fields which
-    are mapped by appy, then finally passed through transform and provided
+    The input file is read(), optionally split into lines and/or fields which
+    are mapped by appy(), then finally passed through transform() and provided
     as multiple arguments to aocf.
 
-    The aocf function should yield its results.
+    The aocf function should yield its results when ready.
 
-    See --help for options taken from command line.
+    See --help or mk_parser for options taken from command line.
     """
 
     def lap_time(label="Time: "):
@@ -160,7 +162,7 @@ def run_aoc(
             info(f"{label}{(t-t0)*time[0]:_.3f}{time[1]}")
 
     t0 = t1 = t2 = timeit.default_timer()
-    day = int(aocf.__name__[-2:])
+    day = day or int(aocf.__name__[-2:])
     session = os.environ.get("SESSION")
     loglevel = os.environ.get("LOGLEVEL", "INFO").upper()
     cmdargs = mk_parser(day, loglevel).parse_args()
