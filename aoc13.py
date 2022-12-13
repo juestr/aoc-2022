@@ -2,16 +2,20 @@
 
 from dataclasses import dataclass
 from functools import total_ordering
+from typing import Iterator, TypeAlias, overload
 
-from more_itertools import chunked
+from funcy import chunks, lmap
 
 from aoc_util import run_aoc
+
+IntTree: TypeAlias = list["int | IntTree"]
+CmpIntTree: TypeAlias = list["CmpInt | CmpIntTree"]
 
 
 @total_ordering
 @dataclass(order=False, frozen=True)
 class CmpInt:
-    """Am int wrapper able to compare to lists"""
+    """An int wrapper able to compare to lists"""
 
     v: int
 
@@ -32,26 +36,33 @@ class CmpInt:
         # fmt: on
 
 
-def setup(lines):
-    def wrap(x: int | list[int | list]) -> "CmpInt | list[CmpInt | list]":
+def setup(lines: list[str]) -> tuple[list[CmpIntTree]]:
+    # fmt: off
+    @overload
+    def wrap(x: int) -> CmpInt: pass
+    @overload
+    def wrap(x: IntTree) -> CmpIntTree: pass
+    # fmt: on
+
+    def wrap(x):
         # fmt: off
         match x:
             case int():     return CmpInt(x)
-            case list():    return [wrap(i) for i in x]
-            case _:         assert False, 'int-lists only'
+            case list():    return lmap(wrap, x)
+            case _:         assert False, 'wrong argument type'
         # fmt: on
 
-    return ([wrap(eval(line)) for line in lines if line],)
+    return ([wrap(eval(line)) for line in lines if line],)  # mypy: ignore
 
 
-def aoc13(packets):
-    indexed_pairs = enumerate(chunked(packets, 2), start=1)
+def aoc13(packets: list[CmpIntTree]) -> Iterator[int]:
+    indexed_pairs = enumerate(chunks(2, packets), start=1)
     correct = (idx for idx, (a, b) in indexed_pairs if a < b)
 
     yield sum(correct)
 
-    divider1 = [[CmpInt(2)]]
-    divider2 = [[CmpInt(6)]]
+    divider1: CmpIntTree = [[CmpInt(2)]]
+    divider2: CmpIntTree = [[CmpInt(6)]]
     packets.extend([divider1, divider2])
     packets.sort()
     idx1 = packets.index(divider1) + 1

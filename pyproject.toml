@@ -9,3 +9,11 @@ profile = "black"
 [tool.autoimport.common_statements]
 "np" = "import numpy as np"
 "pd" = "import pandas as pd"
+
+[tool.mypy]
+# ignore_missing_imports = true
+# ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = ['scipy.*']
+ignore_missing_imports = true

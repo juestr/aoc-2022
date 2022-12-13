@@ -16,7 +16,7 @@ class Monkey:
     items: deque[int]
     op: FunctionType
     test: int
-    next: (int, int)
+    next: tuple[int, int]
     inspections: int = 0
 
     def toss(self, relief=1):
