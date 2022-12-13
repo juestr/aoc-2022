@@ -182,7 +182,8 @@ def run_aoc(
 
     if cmdargs.test:
         with open(cmdargs.results) as fd:
-            cmdargs.expect = fd.read().splitlines()
+            parts = fd.read().replace("\\\n", "\0").splitlines()
+    cmdargs.expect = [part.replace("\0", "\n") for part in parts]
     cmdargs.expect.reverse()
 
     if np_printoptions:
@@ -205,14 +206,15 @@ def run_aoc(
             if str(r) == expected:
                 info("✅ matches the expected value\n")
             else:
-                warn(f"❌ does not match {expected}\n")
+                warn("❌ does not match %s%s\n", "\n" * ("\n" in expected), expected)
         lap_time("Result time: ")
         info("")
     total_time()
 
     if cmdargs.write_results:
         info("Writing results to %s", cmdargs.results)
+        results = [str(r).replace("\n", "\\\n") for r in results]
         with open(cmdargs.results, "w") as fd:
-            fd.write("\n".join(map(str, results)))
+            fd.write("\n".join(results))
 
     logging.shutdown()

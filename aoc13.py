@@ -52,7 +52,7 @@ def setup(lines: list[str]) -> tuple[list[CmpIntTree]]:
             case _:         assert False, 'wrong argument type'
         # fmt: on
 
-    return ([wrap(eval(line)) for line in lines if line],)  # mypy: ignore
+    return ([wrap(eval(line)) for line in lines if line],)
 
 
 def aoc13(packets: list[CmpIntTree]) -> Iterator[int]:

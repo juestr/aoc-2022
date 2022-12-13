@@ -3,7 +3,7 @@
 import numpy as np
 import pandas as pd
 
-from aoc_util import info, run_aoc
+from aoc_util import run_aoc
 
 
 def aoc10(df):
@@ -24,10 +24,8 @@ def aoc10(df):
     idx = np.arange(240) % 40
     screen = np.logical_and(signal - 1 <= idx, idx <= signal + 1)
 
-    np.set_printoptions(linewidth=100, formatter={"bool": " #".__getitem__})
-    info(screen.reshape(-1, 40))
-
-    yield "result logged to INFO"
+    with np.printoptions(linewidth=100, formatter={"bool": "·#".__getitem__}):
+        yield str(screen.reshape(-1, 40))
 
 
 if __name__ == "__main__":
