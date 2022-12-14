@@ -6,6 +6,7 @@ import sys
 import timeit
 from argparse import ArgumentParser
 from logging import debug, error, info, warn
+from typing import Any, Callable
 
 _keep_imports = error, warn, info, debug  # re-export
 _root_logger = logging.getLogger()
@@ -23,21 +24,30 @@ def _fix_lambda(f, default=lambda x: x):
             return f
 
 
-def d(*args, s=" ", r=False, p=False, m="", t="", l=logging.DEBUG):
+def d(*args, s=" ", r=False, p=False, m="", t="", l=logging.DEBUG, apply=None):
     """Simple logging.debug helper"""
-    if p:
-        from pprint import pformat  # noqa: autoimport
-
-        if s == " ":
-            s = "\n"
     if _root_logger.isEnabledFor(l):
+        n = len(args)
+        if p:
+            from pprint import pformat  # noqa: autoimport
+
+            if s == " ":
+                s = "\n"
+            args = map(pformat, args)
+        if apply:
+            args = map(apply, args)
         logging.log(
             l,
             (t + ":\n" if t else "")
             + (m + ":" + s if m else "")
-            + s.join(("%" + "sr"[r],) * len(args)),
-            *(map(pformat, args) if p else args),
+            + s.join(("%" + "sr"[r],) * n),
+            *args,
         )
+
+
+def np_condense(s: Any) -> str:
+    """Condense str conversion of a np.array or similar"""
+    return str(s).replace(" ", "").replace("[", "").replace("]", "")
 
 
 def readfile(fn):
@@ -55,10 +65,12 @@ def np_raw_table(input, dtype="uint8", offs=0):
     return (flat.reshape((-1, l + 1))[:, :-1] - offs,)
 
 
-def mk_input_reader(read=readfile, split=None, apply=None, transform=None):
+def mk_input_reader(
+    read=readfile, split=None, apply=None, transform=None
+) -> Callable[[str], tuple[Any, ...]]:
     """Returns a function reading and transforming an input file"""
 
-    def get_input(filename):
+    def get_input(filename: str) -> tuple[Any, ...]:
         input = read(filename)
         match split:
             case None:
@@ -183,7 +195,7 @@ def run_aoc(
     if cmdargs.test:
         with open(cmdargs.results) as fd:
             parts = fd.read().replace("\\\n", "\0").splitlines()
-    cmdargs.expect = [part.replace("\0", "\n") for part in parts]
+        cmdargs.expect = [part.replace("\0", "\n") for part in parts]
     cmdargs.expect.reverse()
 
     if np_printoptions:
