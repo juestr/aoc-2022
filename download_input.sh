@@ -17,12 +17,13 @@ else
   printf "#!/usr/bin/env python3
 
 from itertools import pairwise
-from more_itertools import chunked
+
+from funcy import map, lmap, mapcat, lmapcat
 import numpy as np
 import pandas as pd
 from aoc_util import run_aoc, error, info, debug, d, np_raw_table
 
-np, pd, pairwise, chunked, d
+np, pd, pairwise, d, map, lmap, mapcat, lmapcat
 
 def aoc%02d(input):
 
@@ -33,14 +34,14 @@ def aoc%02d(input):
 
 
 if __name__ == '__main__':
-run_aoc(
-    aoc%02d,
-    #  read=(pd.read_table, dict(header=None, header=(), sep=' ', delim_whitespace=True)),
-    #  split='lines_fields',
-    #  apply=int,
-    #  transform=np_raw_table,
-    #  np_printoptions=dict(linewidth=120, threshold=5000, edgeitems=10),
-)
+    run_aoc(
+        aoc%02d,
+        #  read=(pd.read_table, dict(header=None, header=(), sep=' ', delim_whitespace=True)),
+        #  split='lines',
+        #  apply=int,
+        #  transform=np_raw_table,
+        #  np_printoptions=dict(linewidth=120, threshold=5000, edgeitems=10),
+    )
 " $1 $1 > $fn
 chmod 755 $fn
 atom $fn

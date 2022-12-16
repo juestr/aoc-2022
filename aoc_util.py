@@ -166,12 +166,13 @@ def run_aoc(
         nonlocal t1, t2
         if cmdargs.timeit:
             t1, t2 = t2, timeit.default_timer()
-            info(f"{label}{(t2-t1)*time[0]:_.3f}{time[1]}")
+            info(f"🕚 {label}{(t2-t1)*time[0]:_.3f}{time[1]}\n")
 
     def total_time(label="Total time: "):
         if cmdargs.timeit:
             t = timeit.default_timer()
-            info(f"{label}{(t-t0)*time[0]:_.3f}{time[1]}")
+            info(f"🕚{label}{(t-t0)*time[0]:_.3f}{time[1]}\n")
+            info("🎄🎄🎄🎄🎄🎄🎄🎄🎄🎄🎄🎄🎄🎄🎄🎄🎄\n")
 
     t0 = t1 = t2 = timeit.default_timer()
     day = day or int(aocf.__name__[-2:])
@@ -209,7 +210,7 @@ def run_aoc(
 
     results = []
     for i, r in enumerate(aocf(*aocf_args), start=1):
-        info(f"\n### Result {i} of {aocf.__name__}():\n")
+        info(f"\n🎄🎄🎄 Result {i} of {aocf.__name__}() 🎄🎄🎄\n")
         print(r)
         info("")
         results.append(r)
@@ -220,7 +221,7 @@ def run_aoc(
             else:
                 warn("❌ does not match %s%s\n", "\n" * ("\n" in expected), expected)
         lap_time("Result time: ")
-        info("")
+        info("🎄🎄🎄🎄🎄🎄🎄🎄🎄🎄🎄🎄🎄🎄🎄🎄🎄\n")
     total_time()
 
     if cmdargs.write_results:

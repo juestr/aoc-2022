@@ -10,9 +10,12 @@ from aoc_util import d, run_aoc
 
 
 def setup(lines: list[str]):
+    # Note: the official inputs were extended by a 3 line header
+    # giving the extra numbers specified in the text and varying
+    # between the official mission and the smaller example.
     convert = lambda line: lmap(int, re.findall("=(\-?\d+)", line))
     ([target_row], [xy_limit], _, *data) = lmap(convert, lines)
-    return (*np.array(data).T, target_row, xy_limit)
+    return (*np.array(data, dtype=np.int32).T, target_row, xy_limit)
 
 
 def aoc15(
@@ -62,7 +65,7 @@ def aoc15(
         for block in range(0, xy_limit + 1, blocksize):
             if block % 100_000 == 0:
                 d(block, m="progress y")
-            rows = np.arange(blocksize) + block
+            rows = np.arange(blocksize, dtype=np.int32) + block
             for y, x_ranges in x_ranges_by_sensor(rows):
                 distress_x = first_uncovered(x_ranges)
                 if distress_x <= xy_limit:
