@@ -11,6 +11,8 @@ from typing import Any, Callable
 _keep_imports = error, warn, info, debug  # re-export
 _root_logger = logging.getLogger()
 
+AOC_INTERACTIVE = int(os.environ.get("AOC_INTERACTIVE") or 0)
+
 
 def _fix_lambda(f, default=lambda x: x):
     match f:
@@ -43,6 +45,12 @@ def d(*args, s=" ", r=False, p=False, m="", t="", l=logging.DEBUG, apply=None):
             + s.join(("%" + "sr"[r],) * n),
             *args,
         )
+
+
+def prompt(msg="continue?", prompt=1, level=logging.DEBUG):
+    if logging.getLogger().isEnabledFor(level):
+        if AOC_INTERACTIVE >= prompt:
+            return input(msg)
 
 
 def np_condense(s: Any) -> str:
