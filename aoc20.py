@@ -14,8 +14,6 @@ def aoc20(numbers):
         for i, x in enumerate(xs):
             pos = permutation[i]
             newpos = (pos + x) % (n - 1)
-            if newpos == pos % (n - 1):
-                newpos = pos
             if newpos > pos:
                 for j in range(len(permutation)):
                     permutation[j] -= pos < permutation[j] <= newpos
