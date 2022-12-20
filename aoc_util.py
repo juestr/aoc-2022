@@ -45,6 +45,10 @@ def d(*args, s=" ", r=False, p=False, m="", t="", l=logging.DEBUG, apply=None):
             + s.join(("%" + "sr"[r],) * n),
             *args,
         )
+    if len(args) == 1:
+        return args[0]
+    else:
+        return args
 
 
 def prompt(msg="continue?", prompt=1, level=logging.DEBUG):
