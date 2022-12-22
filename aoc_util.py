@@ -220,26 +220,32 @@ def run_aoc(
     lap_time("Setup time: ")
     info("")
 
-    results = []
-    for i, r in enumerate(aocf(*aocf_args), start=1):
-        info(f"\n🎄🎄🎄 Result {i} of {aocf.__name__}() 🎄🎄🎄\n")
-        print(r)
-        info("")
-        results.append(r)
-        if cmdargs.expect:
-            expected = cmdargs.expect.pop()
-            if str(r) == expected:
-                info("✅ matches the expected value\n")
-            else:
-                warn("❌ does not match %s%s\n", "\n" * ("\n" in expected), expected)
-        lap_time("Result time: ")
-        info("🎄🎄🎄🎄🎄🎄🎄🎄🎄🎄🎄🎄🎄🎄🎄🎄🎄\n")
-    total_time()
+    try:
+        results = []
+        for i, r in enumerate(aocf(*aocf_args), start=1):
+            info(f"\n🎄🎄🎄 Result {i} of {aocf.__name__}() 🎄🎄🎄\n")
+            print(r)
+            info("")
+            results.append(r)
+            if cmdargs.expect:
+                expected = cmdargs.expect.pop()
+                if str(r) == expected:
+                    info("✅ matches the expected value\n")
+                else:
+                    warn("❌ does not match %s%s\n", "\n" * ("\n" in expected), expected)
+            lap_time("Result time: ")
+            info("🎄🎄🎄🎄🎄🎄🎄🎄🎄🎄🎄🎄🎄🎄🎄🎄🎄\n")
+        total_time()
 
-    if cmdargs.write_results:
-        info("Writing results to %s", cmdargs.results)
-        results = [str(r).replace("\n", "\\\n") for r in results]
-        with open(cmdargs.results, "w") as fd:
-            fd.write("\n".join(results))
+        if cmdargs.write_results:
+            info("Writing results to %s", cmdargs.results)
+            results = [str(r).replace("\n", "\\\n") for r in results]
+            with open(cmdargs.results, "w") as fd:
+                fd.write("\n".join(results))
 
-    logging.shutdown()
+    except BaseException:
+        error("\n🎄🎄🎄🎄🎄🎄  Error   🎄🎄🎄🎄🎄🎄\n")
+        total_time()
+        raise
+    finally:
+        logging.shutdown()
