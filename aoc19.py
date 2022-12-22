@@ -5,6 +5,11 @@ import pandas as pd
 
 from aoc_util import d, run_aoc
 
+SAMPLE_COL = 200
+SAMPLE_TOTAL = 500
+EST_RND_SKIP = 8  # fraction 1/x
+EST_THRESHOLD = 3000
+
 
 def max_geodes(blueprint, total_time):
     """Find max geodes using a DP bottom up strategy with bells and whistles"""
@@ -28,27 +33,28 @@ def max_geodes(blueprint, total_time):
     def sample_most_promising(state):
         n = 0
         samples = []
-        for col in [3, 6, 5, 4, 2, 1, 0]:
-            hi = np.argpartition(state[:, col], -200)[-200:]
+        for col in [3, 6, 5, 4, 2]:
+            hi = np.argpartition(state[:, col], -SAMPLE_COL)[-SAMPLE_COL:]
             state_hi = state[hi]
             samples.append(state_hi[state_hi[:, col] > 0])
             n += samples[-1].shape[0]
-            if n > 500:
+            if n > SAMPLE_TOTAL:
                 break
         return np.vstack(samples)
 
     def estimate(state, time):
-        """Produce a reasonable result fast without branching and in place"""
+        """Produce a reasonable result fast without branching and in place
+
+        This is an "admissable heuristic" usable to prune the search space.
+        """
         if time <= 2:
             return np.max(state[:, 3])
 
         has_materials = state[:, 0:3, np.newaxis] >= costs.T[np.newaxis, :, :]
         can_build = np.bitwise_and.reduce(has_materials, axis=1)
-        can_build[:, 0:3] &= np.random.randint(0, 6, state[:, 0:3].shape) > 0
+        can_build[:, 0:3] &= np.random.randint(0, EST_RND_SKIP, state[:, 0:3].shape) > 0
 
         state[:, 0:3] += state[:, 4:7]
-        state[:, 7:10] = 0
-
         state[:, 0:3][can_build[:, 3]] -= costs[3]
         state[:, 3][can_build[:, 3]] += time - 1
         whitelist = np.logical_not(can_build[:, 3])
@@ -62,9 +68,9 @@ def max_geodes(blueprint, total_time):
     def work_and_build_robots(state, time):
         """A full single round, returns new state with ores mined and robots created"""
 
-        if state.shape[0] > 2000 and time > 2:
+        best_present = np.max(state[:, 3])
+        if state.shape[0] > EST_THRESHOLD and time > 2 and best_present > 0:
             best = estimate(sample_most_promising(state), time)
-            best_present = np.max(state[:, 3])
             d("# estimated geodes: ", best, " | best present: ", best_present)
         else:
             best = 0
@@ -76,7 +82,7 @@ def max_geodes(blueprint, total_time):
         can_build[:, 0:3] &= np.logical_not(state[:, 7:10])
         can_skip = np.logical_not(can_build[:, 3])
 
-        # eliminate hopeless cases
+        # eliminate hopeless cases if we have an estimate
         if best > 0:
             time_left = (time - 1) + can_build[:, 3]
             max_remaining = time_left * (time_left - 1) // 2
@@ -86,9 +92,8 @@ def max_geodes(blueprint, total_time):
             can_build &= whitelist[:, np.newaxis]
             can_skip &= whitelist
             t, w = state.shape[0], np.sum(whitelist)
-            d(f"# infeasable states eliminated: {t-w} {(t-w)/t*100:2.0f}%")
+            d(f"# infeasible states eliminated: {t-w} {(t-w)/t*100:2.0f}%")
 
-        d("# robots and factory working")
         # after deciding can_* let existing robots work
         state[:, 0:3] += state[:, 4:7]
 
@@ -99,7 +104,7 @@ def max_geodes(blueprint, total_time):
             tmp[:, 0:3] -= costs[rtype]
             if rtype == 3:
                 # geodes are never used, so we can book lifetime production
-                # immediately instead of messing with robots
+                # immediately instead of tracking robots
                 tmp[:, 3] += time - 1
             else:
                 tmp[:, 4 + rtype] += 1
@@ -108,18 +113,32 @@ def max_geodes(blueprint, total_time):
 
         # Create states where we skip building anything.
         # We never do so if we could build a geode robot.
-        # If we don't build another type we remember it, so we don't build
-        # the same type in the following round; this would be suboptimal.
+        # If we can build other types but do nothing we remember that, so we don't
+        # build the same type in the following round; this would be suboptimal.
         tmp = state[can_skip]
         tmp[:, 7:10] = can_build[:, 0:3][can_skip]
         builds.append(tmp)
 
+        # Eliminate duplicates. Better would be to eliminate all or more
+        # of dominated states too.
         state = np.vstack(builds)
-        if time > 2:
+        if time > 2 and state.shape[0] > 100:
             s1 = state.shape[0]
             state = np.unique(state, axis=0)
             s2 = state.shape[0]
             d(f"# duplicates eliminated: {s1-s2} {(s1-s2)/s1*100:2.0f}%")
+
+            # The following is too slow and uses too much space for large
+            # vectors.
+            # all_le = np.ones((state.shape[0], state.shape[0]), dtype=bool)
+            # for col in range(10):
+            #     all_le &= np.less_equal.outer(state[:, col], state[:, col])
+            # np.fill_diagonal(all_le, 0)
+            # inferior = np.logical_or.reduce(all_le, axis=1)
+            # state = state[np.logical_not(inferior)]
+            # s3 = state.shape[0]
+            # d(f"# dominated states eliminated: {s2-s3} {(s2-s3)/s2*100:2.0f}%")
+
         return state
 
     d("##### starting work on blueprint", blueprint)
