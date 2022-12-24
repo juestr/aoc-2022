@@ -26,7 +26,7 @@ def _fix_lambda(f, default=lambda x: x):
             return f
 
 
-def d(*args, s=" ", r=False, p=False, m="", t="", l=logging.DEBUG, apply=None):
+def d(*args, s=" ", r=False, p=False, m=None, t=None, l=logging.DEBUG, apply=None):
     """Simple logging.debug helper"""
     if _root_logger.isEnabledFor(l):
         n = len(args)
@@ -40,8 +40,8 @@ def d(*args, s=" ", r=False, p=False, m="", t="", l=logging.DEBUG, apply=None):
             args = map(apply, args)
         logging.log(
             l,
-            (t + ":\n" if t else "")
-            + (m + ":" + s if m else "")
+            (str(t) + ":\n" if t is not None else "")
+            + (str(m) + ":" + s if m is not None else "")
             + s.join(("%" + "sr"[r],) * n),
             *args,
         )
@@ -223,7 +223,7 @@ def run_aoc(
     try:
         results = []
         for i, r in enumerate(aocf(*aocf_args), start=1):
-            info(f"\n🎄🎄🎄 Result {i} of {aocf.__name__}() 🎄🎄🎄\n")
+            info(f"\n🎄🎄🎄 Result {i} of {aocf.__name__}()  🎄🎄🎄\n")
             print(r)
             info("")
             results.append(r)
