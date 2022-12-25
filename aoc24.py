@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 
+from functools import partial
+
 import numpy as np
 import scipy.sparse as sp
-from funcy import lmap, map, partial
 
 from aoc_util import np_raw_table, run_aoc
 
@@ -29,9 +30,8 @@ def aoc24(grid0):
         cycle_ar = np.arange(cycle)
         blizzards_nesw = [np.nonzero(grid.flat == kind)[0] for kind in map(ord, "^>v<")]
         all_blizzards = np.unique(
-            np.hstack(lmap(run_blizzards, blizzards_nesw, offs_nesw, mod_nesw))
+            np.hstack(map(run_blizzards, blizzards_nesw, offs_nesw, mod_nesw))
         )
-        lmap
         all_grid_vertices = np.arange(size * cycle)
         return np.setdiff1d(all_grid_vertices, all_blizzards, assume_unique=True)
 
@@ -70,7 +70,7 @@ def aoc24(grid0):
     )
     good_places = get_good_places()
     grid_waits = connect_grid(good_places, 0)
-    grid_moves = lmap(partial(connect_grid, good_places), offs_nesw, mod_nesw)
+    grid_moves = map(partial(connect_grid, good_places), offs_nesw, mod_nesw)
     connections = np.hstack(
         [
             grid_waits,
